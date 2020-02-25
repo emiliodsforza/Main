@@ -13,12 +13,11 @@
       "commandName": "AzureDevSpaces",
       "launchBrowser": true
     },
-    "IIS": {
-      "commandName": "Project",
-      "applicationUrl": "http://localhost:51044"
-    },
     "IIS Express": {
       "commandName": "Project",
+      "environmentVariables": {
+        "ENVIRONMENT": "Development"
+      },
       "applicationUrl": "http://localhost:51044"
     }
   }
