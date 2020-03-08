@@ -34,7 +34,29 @@ namespace CourseLibrary.API
             services.AddControllers(setupAction =>
             {
                 setupAction.ReturnHttpNotAcceptable = true;
-            }).AddXmlDataContractSerializerFormatters();
+            }).AddXmlDataContractSerializerFormatters()
+                 .ConfigureApiBehaviorOptions(
+                setupAction =>
+                {
+                    setupAction.InvalidModelStateResponseFactory = context =>
+                    {
+                        var problemDetails = new ValidationProblemDetails(context.ModelState)
+                        {
+                            Type="https://courseLibrary.com/modelvalidationproblem",
+                            Title="One or more validation(s) error(s) occured",
+                            Status= StatusCodes.Status422UnprocessableEntity,
+                            Detail="See The error property for Details",
+                            Instance= context.HttpContext.Request.Path
+                        };
+
+                        problemDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
+
+                        return new UnprocessableEntityObjectResult(problemDetails)
+                        {
+                            ContentTypes = {"application/problem+json"}
+                        };
+                    };
+                });
 
             services.AddScoped<ICourseLibraryRepository, CourseLibraryRepository>();
             
