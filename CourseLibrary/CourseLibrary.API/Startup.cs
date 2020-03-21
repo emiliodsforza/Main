@@ -12,6 +12,7 @@ using AutoMapper;
 using System;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Serialization;
 
 namespace CourseLibrary.API
 {
@@ -34,8 +35,12 @@ namespace CourseLibrary.API
             services.AddControllers(setupAction =>
             {
                 setupAction.ReturnHttpNotAcceptable = true;
-            }).AddXmlDataContractSerializerFormatters()
-                 .ConfigureApiBehaviorOptions(
+            }).AddNewtonsoftJson(setupAction =>
+            {
+                setupAction.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            })  
+            .AddXmlDataContractSerializerFormatters()
+            .ConfigureApiBehaviorOptions(
                 setupAction =>
                 {
                     setupAction.InvalidModelStateResponseFactory = context =>
