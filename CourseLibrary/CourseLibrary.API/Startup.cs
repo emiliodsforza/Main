@@ -73,6 +73,8 @@ namespace CourseLibrary.API
             });
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
+            //register property mapping service
+            services.AddTransient<IPropertyMappingService, PropertyMappingService>();
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
