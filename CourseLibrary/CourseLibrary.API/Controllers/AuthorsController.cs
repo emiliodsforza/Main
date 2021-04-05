@@ -30,24 +30,41 @@ namespace CourseLibrary.API.Controllers
                     throw new ArgumentNullException(nameof(mapper));
         }
 
-        [HttpGet()]
+        [HttpGet(Name = "GetAuthors")]
         [HttpHead]
-        public ActionResult<IEnumerable<AuthorDto>> GetAuthors([FromQuery] AuthorsResourceParameters authorsResourceParameters)
+        public ActionResult<IEnumerable<AuthorDto>> GetAuthors(
+               [FromQuery] AuthorsResourceParameters authorsResourceParameters)
         {
-            var authorsFromRepo = _courseLibraryRepository.GetAuthors(authorsResourceParameters);
-            return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo));
-        }
-
-        [HttpGet("{authorId}", Name="GetAuthor" )]
-        public IActionResult GetAuthor(Guid authorId)
-        {
-
-             var authorFromRepo = _courseLibraryRepository.GetAuthor(authorId);
-            if(authorFromRepo == null)
+            if (!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Entities.Author>
+                (authorsResourceParameters.OrderBy))
             {
-                return NotFound();
+                return BadRequest();
             }
-            return Ok(_mapper.Map<AuthorDto>(authorFromRepo));
+
+            var authorsFromRepo = _courseLibraryRepository.GetAuthors(authorsResourceParameters);
+
+            var previousPageLink = authorsFromRepo.HasPrevious ?
+                CreateAuthorsResourceUri(authorsResourceParameters,
+                ResourceUriType.PreviousPage) : null;
+
+            var nextPageLink = authorsFromRepo.HasNext ?
+                CreateAuthorsResourceUri(authorsResourceParameters,
+                ResourceUriType.NextPage) : null;
+
+            var paginationMetadata = new
+            {
+                totalCount = authorsFromRepo.TotalCount,
+                pageSize = authorsFromRepo.PageSize,
+                currentPage = authorsFromRepo.CurrentPage,
+                totalPages = authorsFromRepo.TotalPages,
+                previousPageLink,
+                nextPageLink
+            };
+
+            Response.Headers.Add("X-Pagination",
+                JsonSerializer.Serialize(paginationMetadata));
+
+            return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo));
         }
 
         [HttpPost]
