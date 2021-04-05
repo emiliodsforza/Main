@@ -11,6 +11,7 @@ using AutoMapper;
 using CourseLibrary.API.ResourceParameters;
 using CourseLibrary.API.Entities;
 using Nest;
+using System.Text.Json;
 
 namespace CourseLibrary.API.Controllers
 {
@@ -33,14 +34,8 @@ namespace CourseLibrary.API.Controllers
         [HttpGet(Name = "GetAuthors")]
         [HttpHead]
         public ActionResult<IEnumerable<AuthorDto>> GetAuthors(
-               [FromQuery] AuthorsResourceParameters authorsResourceParameters)
+              [FromQuery] AuthorsResourceParameters authorsResourceParameters)
         {
-            if (!_propertyMappingService.ValidMappingExistsFor<AuthorDto, Entities.Author>
-                (authorsResourceParameters.OrderBy))
-            {
-                return BadRequest();
-            }
-
             var authorsFromRepo = _courseLibraryRepository.GetAuthors(authorsResourceParameters);
 
             var previousPageLink = authorsFromRepo.HasPrevious ?
@@ -89,7 +84,7 @@ namespace CourseLibrary.API.Controllers
         public ActionResult DeleteAuthor(Guid authorId)
         {
             var authorFromRepo = _courseLibraryRepository.GetAuthor(authorId);
-            if(authorFromRepo == null)
+            if (authorFromRepo == null)
             {
                 return NotFound();
             }
@@ -100,5 +95,42 @@ namespace CourseLibrary.API.Controllers
             return NoContent();
         }
 
+        private string CreateAuthorsResourceUri(
+           AuthorsResourceParameters authorsResourceParameters,
+           ResourceUriType type)
+        {
+            switch (type)
+            {
+                case ResourceUriType.PreviousPage:
+                    return Url.Link("GetAuthors",
+                      new
+                      {
+                          pageNumber = authorsResourceParameters.pageNumber - 1,
+                          pageSize = authorsResourceParameters.pageSize,
+                          mainCategory = authorsResourceParameters.MainCategory,
+                          searchQuery = authorsResourceParameters.SearchQuery
+                      });
+                case ResourceUriType.NextPage:
+                    return Url.Link("GetAuthors",
+                      new
+                      {
+                          pageNumber = authorsResourceParameters.pageNumber + 1,
+                          pageSize = authorsResourceParameters.pageSize,
+                          mainCategory = authorsResourceParameters.MainCategory,
+                          searchQuery = authorsResourceParameters.SearchQuery
+                      });
+
+                default:
+                    return Url.Link("GetAuthors",
+                    new
+                    {
+                        pageNumber = authorsResourceParameters.pageNumber,
+                        pageSize = authorsResourceParameters.pageSize,
+                        mainCategory = authorsResourceParameters.MainCategory,
+                        searchQuery = authorsResourceParameters.SearchQuery
+                    });
+            }
+
+        }
     }
 }
